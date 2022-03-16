@@ -31,8 +31,7 @@ namespace Pinetime::Applications::Screens {
 
     void createButtons();
 
-    lv_obj_t *time, *msecTime, *btnPlayPause, *txtPlayPause, *btnMinutesUp, *btnMinutesDown, *btnSecondsUp, *btnSecondsDown, *txtMUp,
-      *txtMDown, *txtSUp, *txtSDown;
+    lv_obj_t *time, *msecTime, *btnPlayPause, *txtPlayPause, *rollerMinutes, *rollerSeconds;
 
     lv_task_t* taskRefresh;
   };
