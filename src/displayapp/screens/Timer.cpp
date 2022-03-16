@@ -22,11 +22,12 @@ void Timer::createButtons() {
     "09\n08\n07\n06\n05\n04\n03\n02\n01\n00",
     LV_ROLLER_MODE_INFINITE
   );
+  lv_roller_set_selected(rollerMinutes, 59 - minutesToSet, LV_ANIM_OFF);
   lv_roller_set_visible_row_count(rollerMinutes, 3);
-  lv_obj_align(rollerMinutes, lv_scr_act(), LV_ALIGN_CENTER, -90, -30);
   lv_obj_set_style_local_text_font(rollerMinutes, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
   lv_obj_set_style_local_text_color(rollerMinutes, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
-  lv_obj_set_size(rollerMinutes, 60, 120);
+  lv_obj_set_height(rollerMinutes, 228);
+  lv_obj_align(rollerMinutes, lv_scr_act(), LV_ALIGN_CENTER, -69, 0);
 
   rollerSeconds = lv_roller_create(lv_scr_act(), nullptr);
   lv_roller_set_options(rollerSeconds,
@@ -38,22 +39,21 @@ void Timer::createButtons() {
     "09\n08\n07\n06\n05\n04\n03\n02\n01\n00",
     LV_ROLLER_MODE_INFINITE
   );
+  lv_roller_set_selected(rollerSeconds, 59 - secondsToSet, LV_ANIM_OFF);
   lv_roller_set_visible_row_count(rollerSeconds, 3);
-  lv_obj_align(rollerSeconds, lv_scr_act(), LV_ALIGN_CENTER, 30, -30);
   lv_obj_set_style_local_text_font(rollerSeconds, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
   lv_obj_set_style_local_text_color(rollerSeconds, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
-  lv_obj_set_size(rollerSeconds, 60, 120);
+  lv_obj_set_height(rollerSeconds, 228);
+  lv_obj_align(rollerSeconds, lv_scr_act(), LV_ALIGN_CENTER, 69, 0);
 }
 
 Timer::Timer(DisplayApp* app, Controllers::TimerController& timerController)
   : Screen(app), running {true}, timerController {timerController} {
-
   time = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_font(time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &jetbrains_mono_76);
   lv_obj_set_style_local_text_color(time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
-
-  uint32_t seconds = timerController.GetTimeRemaining() / 1000;
-  if (seconds) {
+  if (timerController.IsRunning()) {
+    uint32_t seconds = timerController.GetTimeRemaining() / 1000;
     lv_label_set_text_fmt(time, "%02lu:%02lu", seconds / 60, seconds % 60);
   } else {
     lv_label_set_text(time, ":");
@@ -85,7 +85,6 @@ void Timer::Refresh() {
   if (timerController.IsRunning()) {
     uint32_t seconds = timerController.GetTimeRemaining() / 1000;
     lv_label_set_text_fmt(time, "%02lu:%02lu", seconds / 60, seconds % 60);
-    lv_obj_realign(time);
   }
 }
 
@@ -101,16 +100,14 @@ void Timer::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
       lv_label_set_text(time, ":");
       lv_obj_realign(time);
     } else {
-      char buff[3];
-      lv_roller_get_selected_str(rollerMinutes, buff, sizeof(buff));
-      minutesToSet = atoi(buff);
-      lv_roller_get_selected_str(rollerSeconds, buff, sizeof(buff));
-      secondsToSet = atoi(buff);
+      minutesToSet = 59 - lv_roller_get_selected(rollerMinutes);
+      secondsToSet = 59 - lv_roller_get_selected(rollerSeconds);
       if (secondsToSet + minutesToSet > 0) {
-        lv_label_set_text_fmt(time, "%02d:%02d", minutesToSet, secondsToSet);
-
         lv_label_set_text(txtPlayPause, Symbols::pause);
         timerController.StartTimer((secondsToSet + minutesToSet * 60) * 1000);
+
+        lv_label_set_text_fmt(time, "%02d:%02d", minutesToSet, secondsToSet);
+        lv_obj_realign(time);
 
         lv_obj_del(rollerMinutes);
         rollerMinutes = nullptr;
@@ -123,6 +120,7 @@ void Timer::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
 
 void Timer::setDone() {
   lv_label_set_text(time, ":");
+  lv_obj_realign(time);
   lv_label_set_text(txtPlayPause, Symbols::play);
   secondsToSet = 0;
   minutesToSet = 0;
